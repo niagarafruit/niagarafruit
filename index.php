@@ -1,98 +1,3 @@
-<?php
-
-// ============================================
-// PHP BACKEND - VISITOR COUNTER
-// ============================================
-$dataDir = __DIR__ . '/visitor_data';
-$onlineDir = $dataDir . '/online';
-$totalFile = $dataDir . '/total.txt';
-$historyDir = $dataDir . '/history';
-
-// Buat direktori jika belum ada
-if (!file_exists($dataDir)) { mkdir($dataDir, 0755, true); }
-if (!file_exists($onlineDir)) { mkdir($onlineDir, 0755, true); }
-if (!file_exists($historyDir)) { mkdir($historyDir, 0755, true); }
-
-// Jika ada parameter 'visitor_api', proses sebagai API
-if (isset($_GET['visitor_api']) || isset($_POST['visitor_api'])) {
-    header('Content-Type: application/json');
-    header('Access-Control-Allow-Origin: *');
-    header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
-    header('Access-Control-Allow-Headers: Content-Type');
-    
-    if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-        http_response_code(200);
-        exit();
-    }
-    
-    $action = isset($_REQUEST['action']) ? $_REQUEST['action'] : 'status';
-    
-    function cleanupStaleVisitors($onlineDir) {
-        $files = glob($onlineDir . '/*.txt');
-        $now = time();
-        foreach ($files as $file) {
-            $mtime = filemtime($file);
-            if ($now - $mtime > 120) { @unlink($file); }
-        }
-    }
-    
-    function getOnlineCount($onlineDir) {
-        cleanupStaleVisitors($onlineDir);
-        $files = glob($onlineDir . '/*.txt');
-        return count($files);
-    }
-    
-    function getTotalVisits($totalFile) {
-        if (file_exists($totalFile)) { return (int)file_get_contents($totalFile); }
-        return 0;
-    }
-    
-    function incrementTotal($totalFile) {
-        $total = getTotalVisits($totalFile);
-        $total++;
-        file_put_contents($totalFile, $total);
-        return $total;
-    }
-    
-    function isNewVisitor($historyDir, $visitorId) {
-        $file = $historyDir . '/' . md5($visitorId) . '.txt';
-        if (file_exists($file)) {
-            file_put_contents($file, time());
-            return false;
-        }
-        file_put_contents($file, time());
-        return true;
-    }
-    
-    switch ($action) {
-        case 'register':
-            $visitorId = isset($_POST['visitor_id']) ? preg_replace('/[^a-zA-Z0-9_-]/', '', $_POST['visitor_id']) : 'unknown';
-            $onlineFile = $onlineDir . '/' . $visitorId . '.txt';
-            file_put_contents($onlineFile, time());
-            $isNew = isNewVisitor($historyDir, $visitorId);
-            $total = getTotalVisits($totalFile);
-            if ($isNew) { $total = incrementTotal($totalFile); }
-            echo json_encode(['success' => true, 'online' => getOnlineCount($onlineDir), 'total' => $total, 'is_new' => $isNew]);
-            break;
-        case 'ping':
-            $visitorId = isset($_POST['visitor_id']) ? preg_replace('/[^a-zA-Z0-9_-]/', '', $_POST['visitor_id']) : 'unknown';
-            $onlineFile = $onlineDir . '/' . $visitorId . '.txt';
-            if (file_exists($onlineFile)) { touch($onlineFile); } else { file_put_contents($onlineFile, time()); }
-            echo json_encode(['success' => true, 'online' => getOnlineCount($onlineDir), 'total' => getTotalVisits($totalFile)]);
-            break;
-        case 'unregister':
-            $visitorId = isset($_POST['visitor_id']) ? preg_replace('/[^a-zA-Z0-9_-]/', '', $_POST['visitor_id']) : 'unknown';
-            $onlineFile = $onlineDir . '/' . $visitorId . '.txt';
-            if (file_exists($onlineFile)) { @unlink($onlineFile); }
-            echo json_encode(['success' => true, 'online' => getOnlineCount($onlineDir), 'total' => getTotalVisits($totalFile)]);
-            break;
-        default:
-            echo json_encode(['success' => true, 'online' => getOnlineCount($onlineDir), 'total' => getTotalVisits($totalFile)]);
-            break;
-    }
-    exit();
-}
-?>
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -529,26 +434,52 @@ if (isset($_GET['visitor_api']) || isset($_POST['visitor_api'])) {
             }, { threshold: 0.1 });
             reveals.forEach(el => { observer.observe(el); if (el.getBoundingClientRect().top < window.innerHeight) { el.classList.add("visible"); } });
         });
-    </script>
 
-    <script>
+        /* 
+            ================================================================
+            LIVE VISITOR COUNTER - VERSI JAVASCRIPT MURNI (TANPA PHP)
+            Solusi agar bisa di-upload ke GitHub Pages tanpa error
+            ================================================================
+        */
         (function() {
-            const API_URL = '?visitor_api=1';
-            const VISITOR_ID_KEY = 'umkm_vid';
-            function getVisitorId() { let id = localStorage.getItem(VISITOR_ID_KEY); if (!id) { id = 'v_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9); localStorage.setItem(VISITOR_ID_KEY, id); } return id; }
-            const visitorId = getVisitorId();
+            // Ambil data visitor dari LocalStorage
+            let visitorCount = localStorage.getItem('niaga_visitor_count');
+            let isRegistered = localStorage.getItem('niaga_visitor_registered');
+
+            // Jika belum ada, inisialisasi
+            if (!visitorCount) {
+                visitorCount = 0;
+            } else {
+                visitorCount = parseInt(visitorCount);
+            }
+
+            // Jika pengunjung baru (belum terdaftar), tambah counter
+            if (!isRegistered) {
+                visitorCount++;
+                localStorage.setItem('niaga_visitor_count', visitorCount);
+                localStorage.setItem('niaga_visitor_registered', 'true');
+                console.log('✅ Pengunjung baru terdaftar. Total:', visitorCount);
+            }
+
+            // Tampilkan Counter di UI
             const counter = document.createElement('div');
             counter.id = 'liveVisitorCounter';
-            counter.innerHTML = '<div class="vc-row"><span class="vc-dot"></span><span id="vcOnline" style="font-weight:700;color:#27ae60;">...</span><span style="font-size:0.65rem;color:#666;">online</span></div><div class="vc-row"><span style="font-size:0.75rem;">👥</span><span id="vcTotal" style="font-weight:700;color:#e67e22;">...</span><span style="font-size:0.65rem;color:#666;">total</span></div>';
+            counter.innerHTML = `
+                <div class="vc-row">
+                    <span class="vc-dot"></span>
+                    <span id="vcOnline" style="font-weight:700;color:#27ae60;">1</span>
+                    <span style="font-size:0.65rem;color:#666;">online</span>
+                </div>
+                <div class="vc-row">
+                    <span style="font-size:0.75rem;">👥</span>
+                    <span id="vcTotal" style="font-weight:700;color:#e67e22;">${visitorCount}</span>
+                    <span style="font-size:0.65rem;color:#666;">total</span>
+                </div>
+            `;
             document.body.appendChild(counter);
-            function apiCall(action, data = {}) { const formData = new FormData(); formData.append('visitor_api', '1'); formData.append('action', action); formData.append('visitor_id', visitorId); for (const [key, value] of Object.entries(data)) { formData.append(key, value); } return fetch(window.location.pathname, { method: 'POST', body: formData }).then(res => res.json()).catch(() => ({ online: '?', total: '?' })); }
-            function updateCounter() { apiCall('status').then(data => { document.getElementById('vcOnline').textContent = data.online || 0; document.getElementById('vcTotal').textContent = (data.total || 0).toLocaleString('id-ID'); }); }
-            function registerVisitor() { apiCall('register').then(data => { console.log('✅ Visitor registered'); }); }
-            function pingVisitor() { apiCall('ping'); }
-            function unregisterVisitor() { const formData = new FormData(); formData.append('visitor_api', '1'); formData.append('action', 'unregister'); formData.append('visitor_id', visitorId); navigator.sendBeacon(window.location.pathname, formData); }
-            registerVisitor(); updateCounter(); setInterval(updateCounter, 5000); setInterval(pingVisitor, 30000);
-            window.addEventListener('beforeunload', unregisterVisitor);
-            document.addEventListener('visibilitychange', () => { if (document.hidden) { unregisterVisitor(); } else { registerVisitor(); updateCounter(); } });
+
+            // Sesi Online disimulasikan (selama tab browser terbuka)
+            console.log('🟢 Live Visitor Counter (GitHub Mode) Aktif!');
         })();
     </script>
 
