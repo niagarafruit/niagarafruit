@@ -157,12 +157,91 @@
         .product-btn { width: 100%; padding: 10px; background: var(--logo-green); color: white; border: none; border-radius: 25px; font-weight: 600; transition: var(--transition); font-size: 0.9rem; display: block; text-align: center; text-decoration: none; }
         .product-btn:hover { background: #7ab532; }
 
-        .gallery-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 30px; }
-        .gallery-item { position: relative; border-radius: var(--border-radius); overflow: hidden; cursor: pointer; height: 200px; background: #f0f0f0; transition: var(--transition); }
-        .gallery-item:nth-child(4), .gallery-item:nth-child(5) { grid-column: span 1.5; height: 220px; }
-        .gallery-item img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
-        .gallery-item:hover { transform: scale(1.02); }
-        .btn-gallery-more { display: table; margin: 0 auto; background: var(--logo-green); color: white; padding: 10px 30px; border-radius: 25px; text-decoration: none; font-weight: 500; }
+        /* -- GALLERY SLIDER OTOMATIS DARI KIRI KE KANAN (MARQUEE STYLE) -- */
+        #gallery {
+            background: var(--bg-white);
+            position: relative;
+            overflow: hidden;
+        }
+        .gallery-slider-container {
+            width: 100%;
+            overflow: hidden;
+            padding: 20px 0;
+            position: relative;
+        }
+        .gallery-slider-track {
+            display: flex;
+            gap: 20px;
+            width: max-content;
+            /* Animasi slide dari kiri ke kanan tanpa henti */
+            animation: slideGallery 25s linear infinite;
+        }
+        @keyframes slideGallery {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+        /* Hentikan animasi saat kursor diarahkan ke slider */
+        .gallery-slider-track:hover {
+            animation-play-state: paused;
+        }
+        .gallery-slide-item {
+            width: 320px;
+            height: 200px;
+            flex-shrink: 0;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: var(--box-shadow);
+            position: relative;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+        }
+        .gallery-slide-item:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+        }
+        .gallery-slide-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        /* Efek Overlay Teks saat di-hover */
+        .gallery-slide-item .overlay-info {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            padding: 20px;
+            background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
+            color: white;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            font-size: 0.9rem;
+            font-weight: 500;
+            text-align: center;
+            pointer-events: none;
+        }
+        .gallery-slide-item:hover .overlay-info {
+            opacity: 1;
+        }
+        .btn-gallery-more {
+            display: table;
+            margin: 30px auto 0 auto;
+            background: var(--logo-green);
+            color: white;
+            padding: 12px 35px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: var(--transition);
+            position: relative;
+            z-index: 5;
+        }
+        .btn-gallery-more:hover {
+            background: #7ab532;
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(141, 198, 63, 0.3);
+        }
 
         .contact-content { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
         .contact-info h3 { font-size: 1.5rem; margin-bottom: 20px; color: var(--text-dark); }
@@ -198,15 +277,9 @@
         #liveVisitorCounter .vc-dot { width: 8px; height: 8px; background: #27ae60; border-radius: 50%; animation: vcPulse 1.5s infinite; }
         @keyframes vcPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(39,174,96,0.7); } 50% { box-shadow: 0 0 0 6px rgba(39,174,96,0); } }
 
+        /* Responsive Fixes */
         @media (max-width: 1024px) {
-            .gallery-grid { grid-template-columns: repeat(2, 1fr); }
-            .gallery-item:nth-child(4), .gallery-item:nth-child(5) { grid-column: span 1; height: 200px; }
-        }
-        @media (max-width: 992px) {
-            .hero-title { font-size: 2.5rem; }
-            .hero-text { max-width: 500px; }
-            #profile .profile-content, .contact-content { grid-template-columns: 1fr; gap: 30px; }
-            .profile-image { height: 300px; }
+            .gallery-slide-item { width: 280px; height: 180px; }
         }
         @media (max-width: 768px) {
             .hamburger { display: flex; }
@@ -225,10 +298,11 @@
             .product-category { margin: 0 auto 10px auto; }
             .profile-stats { flex-direction: column; gap: 10px; align-items: flex-start; padding: 15px; }
             .footer .container { flex-direction: column; gap: 20px; text-align: center; }
+            .gallery-slide-item { width: 220px; height: 150px; }
         }
         @media (max-width: 480px) {
             .hero-title { font-size: 1.8rem; }
-            .gallery-grid { grid-template-columns: 1fr; }
+            .gallery-slide-item { width: 180px; height: 120px; }
             .logo-img { height: 38px; }
         }
     </style>
@@ -320,16 +394,55 @@
         </div>
     </section>
 
+    <!-- ============================================= -->
+    <!-- GALERI SLIDER OTOMATIS (KIRI KE KANAN)   -->
+    <!-- ============================================= -->
     <section class="section" id="gallery">
         <div class="container">
             <span class="section-tag reveal delay-2" style="display:table; margin:0 auto 10px auto;">Galeri</span>
             <h2 class="section-title reveal delay-3">Dokumentasi Kegiatan Usaha</h2>
-            <div class="gallery-grid">
-                <div class="gallery-item reveal delay-4"><img src="gallery1.jpg" alt="Galeri 1" onerror="this.style.display='none'; this.style.background='#e0e0e0'; this.innerHTML='<i class=\'fas fa-image\' style=\'font-size:3rem; color:#999;\'></i>';"></div>
-                <div class="gallery-item reveal delay-4"><img src="gallery2.jpg" alt="Galeri 2" onerror="this.style.display='none'; this.style.background='#e0e0e0'; this.innerHTML='<i class=\'fas fa-image\' style=\'font-size:3rem; color:#999;\'></i>';"></div>
-                <div class="gallery-item reveal delay-5"><img src="gallery3.jpg" alt="Galeri 3" onerror="this.style.display='none'; this.style.background='#e0e0e0'; this.innerHTML='<i class=\'fas fa-image\' style=\'font-size:3rem; color:#999;\'></i>';"></div>
-                <div class="gallery-item reveal delay-5"><img src="gallery4.jpg" alt="Galeri 4" onerror="this.style.display='none'; this.style.background='#e0e0e0'; this.innerHTML='<i class=\'fas fa-image\' style=\'font-size:3rem; color:#999;\'></i>';"></div>
+            <p class="section-subtitle" style="margin-bottom: 10px;">Jelajahi momen-momen kami dalam menyajikan kesegaran untuk Anda</p>
+            
+            <div class="gallery-slider-container reveal delay-4">
+                <div class="gallery-slider-track" id="galleryTrack">
+                    <!-- ITEM GAMBAR GANDA UNTUK EFEK LOOP TAK TERHINGGA -->
+                    <div class="gallery-slide-item">
+                        <img src="gallery1.jpg" alt="Galeri 1" onerror="this.style.display='none'; this.parentElement.style.background='#e0e0e0'; this.parentElement.innerHTML='<div style=\'display:flex;align-items:center;justify-content:center;height:100%;color:#999;font-size:1.5rem;\'><i class=\'fas fa-image\'></i></div>';">
+                        <div class="overlay-info">🍹 Kegiatan Harian</div>
+                    </div>
+                    <div class="gallery-slide-item">
+                        <img src="gallery2.jpg" alt="Galeri 2" onerror="this.style.display='none'; this.parentElement.style.background='#e0e0e0'; this.parentElement.innerHTML='<div style=\'display:flex;align-items:center;justify-content:center;height:100%;color:#999;font-size:1.5rem;\'><i class=\'fas fa-image\'></i></div>';">
+                        <div class="overlay-info">🥤 Penyajian Istimewa</div>
+                    </div>
+                    <div class="gallery-slide-item">
+                        <img src="gallery3.jpg" alt="Galeri 3" onerror="this.style.display='none'; this.parentElement.style.background='#e0e0e0'; this.parentElement.innerHTML='<div style=\'display:flex;align-items:center;justify-content:center;height:100%;color:#999;font-size:1.5rem;\'><i class=\'fas fa-image\'></i></div>';">
+                        <div class="overlay-info">🥭 Bahan Segar Pilihan</div>
+                    </div>
+                    <div class="gallery-slide-item">
+                        <img src="gallery4.jpg" alt="Galeri 4" onerror="this.style.display='none'; this.parentElement.style.background='#e0e0e0'; this.parentElement.innerHTML='<div style=\'display:flex;align-items:center;justify-content:center;height:100%;color:#999;font-size:1.5rem;\'><i class=\'fas fa-image\'></i></div>';">
+                        <div class="overlay-info">👨‍🍳 Tim Niagara Fruit</div>
+                    </div>
+                    
+                    <!-- DUPLIKASI GAMBAR UNTUK LOOPING MULUS -->
+                    <div class="gallery-slide-item">
+                        <img src="gallery1.jpg" alt="Galeri 1" onerror="this.style.display='none'; this.parentElement.style.background='#e0e0e0'; this.parentElement.innerHTML='<div style=\'display:flex;align-items:center;justify-content:center;height:100%;color:#999;font-size:1.5rem;\'><i class=\'fas fa-image\'></i></div>';">
+                        <div class="overlay-info">🍹 Kegiatan Harian</div>
+                    </div>
+                    <div class="gallery-slide-item">
+                        <img src="gallery2.jpg" alt="Galeri 2" onerror="this.style.display='none'; this.parentElement.style.background='#e0e0e0'; this.parentElement.innerHTML='<div style=\'display:flex;align-items:center;justify-content:center;height:100%;color:#999;font-size:1.5rem;\'><i class=\'fas fa-image\'></i></div>';">
+                        <div class="overlay-info">🥤 Penyajian Istimewa</div>
+                    </div>
+                    <div class="gallery-slide-item">
+                        <img src="gallery3.jpg" alt="Galeri 3" onerror="this.style.display='none'; this.parentElement.style.background='#e0e0e0'; this.parentElement.innerHTML='<div style=\'display:flex;align-items:center;justify-content:center;height:100%;color:#999;font-size:1.5rem;\'><i class=\'fas fa-image\'></i></div>';">
+                        <div class="overlay-info">🥭 Bahan Segar Pilihan</div>
+                    </div>
+                    <div class="gallery-slide-item">
+                        <img src="gallery4.jpg" alt="Galeri 4" onerror="this.style.display='none'; this.parentElement.style.background='#e0e0e0'; this.parentElement.innerHTML='<div style=\'display:flex;align-items:center;justify-content:center;height:100%;color:#999;font-size:1.5rem;\'><i class=\'fas fa-image\'></i></div>';">
+                        <div class="overlay-info">👨‍🍳 Tim Niagara Fruit</div>
+                    </div>
+                </div>
             </div>
+            
             <a href="#gallery" class="btn-gallery-more reveal delay-7">Lihat Semua Galeri</a>
         </div>
     </section>
@@ -440,7 +553,10 @@
         });
 
         /* 
-         
+            ================================================================
+            LIVE VISITOR COUNTER - VERSI JAVASCRIPT MURNI (TANPA PHP)
+            Solusi agar bisa di-upload ke GitHub Pages tanpa error
+            ================================================================
         */
         (function() {
             // Ambil data visitor dari LocalStorage
